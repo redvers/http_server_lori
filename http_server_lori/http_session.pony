@@ -1,6 +1,7 @@
 use "../../lori/lori"
 use "debug"
 use "buffered"
+use "collections"
 
 primitive _ExpectRequestLine
 primitive _ExpectHeaders
@@ -50,15 +51,46 @@ actor HTTPSession is HTTPSessionActor
   fun ref _on_received(data: Array[U8] iso) =>
     Debug.out("HTTPSession._on_received() has been called")
     buffer.append(consume data)
+    process_buffer()
+
+  fun ref process_buffer() =>
     match _session_status
     | _ExpectRequestLine => parse_request_line()
-                            Debug.out(httprequest.string())
+    | _ExpectHeaders     => parse_headers()
     end
+
+
+  fun ref parse_headers() =>
+    Debug.out("HTTPSession._parse_headers() has been called")
+    while true do
+      try
+        let h: String val = buffer.line()?
+        if (h == "") then
+          Debug.out("Final Header Received")
+          break
+        else
+          let offs: ISize = h.find(": ")?
+          let k: String val = h.substring(0, offs)
+          let v: String val = h.substring(offs+2)
+          httprequest.headers.insert(k,v)
+          Debug.out("Header|"+k+"|"+v)
+        end
+      else
+        Debug.out("HTTPSession._parse_headers() need more data")
+      end
+    end
+    Debug.out("HTTPSession._parse_headers() sets _ExpectBody")
+    _session_status = _ExpectBody
+
+
 
   fun ref parse_request_line() =>
     // FIXME - NOTE - We may need to split up this section more
     // since failure to complete this entire function will result
     // in a desynched session.
+    //
+    // Yeah - I really should just be pulling a line()
+    //
     httprequest.method =
       try
         Debug.out("HTTPSession.parse_request_line(METHOD)")
@@ -96,6 +128,11 @@ actor HTTPSession is HTTPSessionActor
         return None
       end
 
+    Debug.out("HTTPSession.parse_request_line() updated to _ExpectHeaders")
+    Debug.out(httprequest.string())
+    _session_status = _ExpectHeaders
+    process_buffer()
+
 
 
 
@@ -119,6 +156,7 @@ class HTTPRequest
   var method: HTTPMethod = None
   var path: String val = ""
   var version: String val = ""
+  var headers: Map[String val, String val] = Map[String val, String val]
 
   fun ref string(): String val =>
     method.string() + "|" + path + "|" + version + "|"
