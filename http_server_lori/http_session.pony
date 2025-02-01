@@ -3,39 +3,6 @@ use "debug"
 use "buffered"
 use "collections"
 
-primitive _ExpectRequestLine
-primitive _ExpectHeaders
-primitive _ExpectBody
-primitive _ExpectChunkStart
-primitive _ExpectChunk
-primitive _ExpectChunkEnd
-
-type HTTPSessionStatus is (
-  _ExpectRequestLine |
-      _ExpectHeaders |
-      _ExpectBody    |
-      _ExpectChunkStart |
-      _ExpectChunk   |
-      _ExpectChunkEnd)
-
-trait HTTPSessionActor is TCPServerActor
-  fun ref _connection(): TCPConnection
-  fun ref _http_session_status(): HTTPSessionStatus
-
-  fun ref _on_received(data: Array[U8] iso): None =>
-    Debug.out("trait: HTTPSessionActor._on_received() has been called")
-  fun ref _on_closed() => None
-    Debug.out("trait: HTTPSessionActor._on_closed() has been called")
-  fun ref _on_throttled() => None
-    Debug.out("trait: HTTPSessionActor._on_throttled() has been called")
-  fun ref _on_unthrottled() => None
-    Debug.out("trait: HTTPSessionActor._on_unthrottled() has been called")
-
-
-
-
-
-
 actor HTTPSession is HTTPSessionActor
   var _tcp_connection: TCPConnection = TCPConnection.none()
   var _session_status: HTTPSessionStatus = _ExpectRequestLine
@@ -140,42 +107,3 @@ actor HTTPSession is HTTPSessionActor
 
   fun ref _http_session_status(): HTTPSessionStatus => _session_status
 
-type HTTPMethod is (
-  HTTPGet |
-  HTTPPost |
-  HTTPConnect |
-  HTTPOptions |
-  HTTPPut |
-  HTTPHead |
-  HTTPDelete |
-  HTTPPatch |
-  HTTPTrace |
-  None)
-
-class HTTPRequest
-  var method: HTTPMethod = None
-  var path: String val = ""
-  var version: String val = ""
-  var headers: Map[String val, String val] iso = recover iso Map[String val, String val] end
-
-  fun ref string(): String val =>
-    method.string() + "|" + path + "|" + version + "|"
-
-primitive HTTPGet
-  fun string(): String val => "HTTPGet"
-primitive HTTPPost
-  fun string(): String val => "HTTPPost"
-primitive HTTPConnect
-  fun string(): String val => "HTTPConnect"
-primitive HTTPOptions
-  fun string(): String val => "HTTPOptions"
-primitive HTTPPut
-  fun string(): String val => "HTTPPut"
-primitive HTTPHead
-  fun string(): String val => "HTTPHead"
-primitive HTTPDelete
-  fun string(): String val => "HTTPDelete"
-primitive HTTPPatch
-  fun string(): String val => "HTTPPatch"
-primitive HTTPTrace
-  fun string(): String val => "HTTPTrace"
