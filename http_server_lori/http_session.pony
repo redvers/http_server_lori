@@ -40,7 +40,7 @@ actor HTTPSession is HTTPSessionActor
   var _tcp_connection: TCPConnection = TCPConnection.none()
   var _session_status: HTTPSessionStatus = _ExpectRequestLine
   let buffer: Reader = Reader
-  let httprequest: HTTPRequest = HTTPRequest
+  let httprequest: HTTPRequest iso = recover iso HTTPRequest end
 
   fun ref _connection(): TCPConnection => _tcp_connection
 
@@ -156,7 +156,7 @@ class HTTPRequest
   var method: HTTPMethod = None
   var path: String val = ""
   var version: String val = ""
-  var headers: Map[String val, String val] = Map[String val, String val]
+  var headers: Map[String val, String val] iso = recover iso Map[String val, String val] end
 
   fun ref string(): String val =>
     method.string() + "|" + path + "|" + version + "|"
