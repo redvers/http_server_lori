@@ -4,13 +4,13 @@ use "buffered"
 use "collections"
 
 trait HTTPSessionActor is TCPServerActor
-  fun ref mybuffer(): Reader
-  fun ref mystatus(): HTTPSessionStatus
-  fun ref setstatus(status: HTTPSessionStatus): None
-  fun ref myhttprequest(): HTTPRequest
+  fun ref status(): HTTPSessionStatus
+  fun ref setstatus(status': HTTPSessionStatus): None
+  fun ref request(): HTTPRequest
+  fun ref buffer(): Reader
 
   fun ref process_buffer() =>
-    match mystatus()
+    match status()
     | _ExpectRequestLine => parse_request_line()
     | _ExpectHeaders     => parse_headers()
     end
@@ -22,10 +22,10 @@ trait HTTPSessionActor is TCPServerActor
     //
     // Yeah - I really should just be pulling a line()
     //
-    myhttprequest().method =
+    request().method =
       try
         Debug.out("HTTPSessionActor.parse_request_line(METHOD)")
-        match String.from_array(mybuffer().read_until(' ')?)
+        match String.from_array(buffer().read_until(' ')?)
         | "GET" => HTTPGet
         | "HEAD" => HTTPHead
         | "POST" => HTTPPost
@@ -42,19 +42,19 @@ trait HTTPSessionActor is TCPServerActor
         return None
       end
 
-    myhttprequest().path =
+    request().path =
       try
         Debug.out("HTTPSessionActor.parse_request_line(PATH)")
-        String.from_array(mybuffer().read_until(' ')?)
+        String.from_array(buffer().read_until(' ')?)
       else
         Debug.out("HTTPSessionActor.parse_request_line(PATH) needs more bytes")
         return None
       end
 
-    myhttprequest().version =
+    request().version =
       try
         Debug.out("HTTPSessionActor.parse_request_line(VERSION)")
-        match mybuffer().line()?
+        match buffer().line()?
         | "HTTP/1.0" => HTTP10
         | "HTTP/1.1" => HTTP11
         | let x: String val => Debug.out(x)
@@ -65,7 +65,7 @@ trait HTTPSessionActor is TCPServerActor
       end
 
     Debug.out("HTTPSessionActor.parse_request_line() updated to _ExpectHeaders")
-    Debug.out(myhttprequest().string())
+    Debug.out(request().string())
     setstatus(_ExpectHeaders)
     process_buffer()
 
@@ -73,7 +73,7 @@ trait HTTPSessionActor is TCPServerActor
     Debug.out("HTTPSessionActor._parse_headers() has been called")
     while true do
       try
-        let h: String val = mybuffer().line()?
+        let h: String val = buffer().line()?
         if (h == "") then
           Debug.out("Final Header Received")
           break
@@ -81,29 +81,34 @@ trait HTTPSessionActor is TCPServerActor
           let offs: ISize = h.find(": ")?
           let k: String val = h.substring(0, offs)
           let v: String val = h.substring(offs+2)
-          myhttprequest().headers.insert(k,v)
+          request().headers.insert(k,v)
           Debug.out("Header|"+k+"|"+v)
         end
       else
         Debug.out("HTTPSessionActor._parse_headers() need more data")
       end
     end
-    Debug.out("HTTPSessionActor._parse_headers() sets _ExpectBody")
-    setstatus(_ExpectBody)
+
+    match request().method
+    | HTTPGet => setstatus(_SendYourData)
+    | HTTPHead => setstatus(_SendYourData)
+    else
+      setstatus(_ExpectBody)
+    end
+    Debug.out("HTTPSessionActor._parse_headers() sets " + status().string())
 
 
 
 
-
+/*
+ * These are the callbacks that used by TCPConnectionActor
+ */
 
   fun ref _connection(): TCPConnection
-  fun ref _http_session_status(): HTTPSessionStatus
-
   fun ref _on_received(data: Array[U8] iso): None =>
     Debug.out("trait: HTTPSessionActor._on_received() has been called")
-    mybuffer().append(consume data)
+    buffer().append(consume data)
     process_buffer()
-
   fun ref _on_closed() => None
     Debug.out("trait: HTTPSessionActor._on_closed() has been called")
   fun ref _on_throttled() => None

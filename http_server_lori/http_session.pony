@@ -5,9 +5,9 @@ use "collections"
 
 actor HTTPSession is HTTPSessionActor
   var _tcp_connection: TCPConnection = TCPConnection.none()
-  var _session_status: HTTPSessionStatus = _ExpectRequestLine
-  let buffer: Reader = Reader
-  let httprequest: HTTPRequest = HTTPRequest
+  var _status: HTTPSessionStatus = _ExpectRequestLine
+  let _buffer: Reader = Reader
+  let _request: HTTPRequest = HTTPRequest
 
   fun ref _connection(): TCPConnection => _tcp_connection
 
@@ -15,10 +15,10 @@ actor HTTPSession is HTTPSessionActor
     Debug.out("HTTPSession.create() has been called")
     _tcp_connection = TCPConnection.server(auth, fd, this)
 
-  fun ref mystatus(): HTTPSessionStatus => _session_status
-  fun ref setstatus(status: HTTPSessionStatus) => _session_status = status
-  fun ref mybuffer(): Reader => buffer
-  fun ref myhttprequest(): HTTPRequest => httprequest
+  fun ref status(): HTTPSessionStatus => _status
+  fun ref setstatus(status': HTTPSessionStatus) => _status = status'
+  fun ref buffer(): Reader => _buffer
+  fun ref request(): HTTPRequest => _request
 
 /*
    +-------------------+-----------------+
@@ -31,8 +31,4 @@ actor HTTPSession is HTTPSessionActor
    +-------------------+-----------------+
                                            */
 
-
-
-
-  fun ref _http_session_status(): HTTPSessionStatus => _session_status
 
