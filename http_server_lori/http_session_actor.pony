@@ -90,12 +90,14 @@ trait HTTPSessionActor is TCPServerActor
     end
 
     match request().method
-    | HTTPGet => setstatus(_SendYourData)
+//    | HTTPGet => setstatus(_SendYourData)
     | HTTPHead => setstatus(_SendYourData)
     else
-      setstatus(_ExpectBody)
+//      setstatus(_ExpectBody)
+      _connection().send(HttpError404() + "\r\n")
+      _connection().close()
     end
-    Debug.out("HTTPSessionActor._parse_headers() sets " + status().string())
+//    Debug.out("HTTPSessionActor._parse_headers() sets " + status().string())
 
 
 
