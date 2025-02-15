@@ -1,7 +1,9 @@
 use "../../lori/lori"
-use "debug"
 use "buffered"
 use "collections"
+use @pony_scheduler_index[I32]()
+
+use @printf[I32](fmt: Pointer[U8] tag, ...)
 
 trait HTTPSessionActor is TCPServerActor
   fun ref status(): HTTPSessionStatus
@@ -13,6 +15,7 @@ trait HTTPSessionActor is TCPServerActor
     match status()
     | _ExpectRequestLine => parse_request_line()
     | _ExpectHeaders     => parse_headers()
+    | _ExpectBody        => return
     end
 
   fun ref parse_request_line() =>
@@ -22,9 +25,17 @@ trait HTTPSessionActor is TCPServerActor
     //
     // Yeah - I really should just be pulling a line()
     //
-    request().method =
+    try
+      buffer().line()?
+    else
+      P("AAAAAAAARRRRRRRHHHHHH\n".cstring())
+    end
+    request().method = HTTPGet
+    request().path = "/fake"
+    request().version = HTTP11
+    /*
       try
-        Debug.out("HTTPSessionActor.parse_request_line(METHOD)")
+        P("a".cstring())
         match String.from_array(buffer().read_until(' ')?)
         | "GET" => HTTPGet
         | "HEAD" => HTTPHead
@@ -37,55 +48,51 @@ trait HTTPSessionActor is TCPServerActor
         | "PATCH" => HTTPPatch
         | "TRACE" => HTTPTrace
         end
+        P("b".cstring())
       else
-        Debug.out("HTTPSessionActor.parse_request_line(METHOD) needs more bytes")
         return None
       end
 
     request().path =
       try
-        Debug.out("HTTPSessionActor.parse_request_line(PATH)")
-        String.from_array(buffer().read_until(' ')?)
+        P("c".cstring())
+        let q = String.from_array(buffer().read_until(' ')?)
+        P("d".cstring())
+        consume q
       else
-        Debug.out("HTTPSessionActor.parse_request_line(PATH) needs more bytes")
         return None
       end
 
     request().version =
       try
-        Debug.out("HTTPSessionActor.parse_request_line(VERSION)")
+        P("e".cstring())
         match buffer().line()?
         | "HTTP/1.0" => HTTP10
         | "HTTP/1.1" => HTTP11
-        | let x: String val => Debug.out(x)
+        | let x: String val => None
         end
+        P("f".cstring())
       else
-        Debug.out("HTTPSessionActor.parse_request_line(VERSION) needs more bytes")
         return None
       end
-
-    Debug.out("HTTPSessionActor.parse_request_line() updated to _ExpectHeaders")
-    Debug.out(request().string())
+*/
     setstatus(_ExpectHeaders)
     process_buffer()
 
   fun ref parse_headers() =>
-    Debug.out("HTTPSessionActor._parse_headers() has been called")
     while true do
       try
         let h: String val = buffer().line()?
         if (h == "") then
-          Debug.out("Final Header Received")
           break
         else
           let offs: ISize = h.find(": ")?
           let k: String val = h.substring(0, offs)
           let v: String val = h.substring(offs+2)
           request().headers.insert(k,v)
-          Debug.out("Header|"+k+"|"+v)
         end
       else
-        Debug.out("HTTPSessionActor._parse_headers() need more data")
+        None
       end
     end
 
@@ -93,11 +100,10 @@ trait HTTPSessionActor is TCPServerActor
 //    | HTTPGet => setstatus(_SendYourData)
     | HTTPHead => setstatus(_SendYourData)
     else
-//      setstatus(_ExpectBody)
-      _connection().send(HttpError404() + "\r\n")
+      setstatus(_ExpectBody)
+      _connection().send(Http200())
       _connection().close()
     end
-//    Debug.out("HTTPSessionActor._parse_headers() sets " + status().string())
 
 
 
@@ -107,13 +113,10 @@ trait HTTPSessionActor is TCPServerActor
  */
 
   fun ref _connection(): TCPConnection
-  fun ref _on_received(data: Array[U8] iso): None =>
-    Debug.out("trait: HTTPSessionActor._on_received() has been called")
+  fun ref _connection_kill(): None
+  fun ref _on_received(data: Array[U8] val): None =>
     buffer().append(consume data)
     process_buffer()
   fun ref _on_closed() => None
-    Debug.out("trait: HTTPSessionActor._on_closed() has been called")
   fun ref _on_throttled() => None
-    Debug.out("trait: HTTPSessionActor._on_throttled() has been called")
   fun ref _on_unthrottled() => None
-    Debug.out("trait: HTTPSessionActor._on_unthrottled() has been called")

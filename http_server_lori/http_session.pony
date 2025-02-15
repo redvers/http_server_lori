@@ -1,5 +1,4 @@
 use "../../lori/lori"
-use "debug"
 use "buffered"
 use "collections"
 
@@ -10,9 +9,10 @@ actor HTTPSession is HTTPSessionActor
   let _request: HTTPRequest = HTTPRequest
 
   fun ref _connection(): TCPConnection => _tcp_connection
+  fun ref _connection_kill() =>
+    _tcp_connection = TCPConnection.none()
 
   new create(auth: TCPServerAuth, fd: U32) =>
-    Debug.out("HTTPSession.create() has been called")
     _tcp_connection = TCPConnection.server(auth, fd, this)
 
   fun ref status(): HTTPSessionStatus => _status
@@ -30,5 +30,4 @@ actor HTTPSession is HTTPSessionActor
    | Content-Location  | Section 3.1.4.2 |
    +-------------------+-----------------+
                                            */
-
 
