@@ -13,7 +13,7 @@ actor HTTPSession is HTTPSessionActor
     _tcp_connection = TCPConnection.none()
 
   new create(auth: TCPServerAuth, fd: U32) =>
-    _tcp_connection = TCPConnection.server(auth, fd, this)
+    _tcp_connection = TCPConnection.server(auth, fd, this, this)
 
   fun ref status(): HTTPSessionStatus => _status
   fun ref setstatus(status': HTTPSessionStatus) => _status = status'
@@ -31,3 +31,5 @@ actor HTTPSession is HTTPSessionActor
    +-------------------+-----------------+
                                            */
 
+  fun _final() =>
+    @printf(".".cstring())

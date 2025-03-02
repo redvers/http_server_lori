@@ -5,7 +5,7 @@ use @pony_scheduler_index[I32]()
 
 use @printf[I32](fmt: Pointer[U8] tag, ...)
 
-trait HTTPSessionActor is TCPServerActor
+trait HTTPSessionActor is (TCPConnectionActor & ServerLifecycleEventReceiver)
   fun ref status(): HTTPSessionStatus
   fun ref setstatus(status': HTTPSessionStatus): None
   fun ref request(): HTTPRequest
@@ -114,3 +114,4 @@ trait HTTPSessionActor is TCPServerActor
   fun ref _on_closed() => None
   fun ref _on_throttled() => None
   fun ref _on_unthrottled() => None
+  fun ref _next_lifecycle_event_receiver(): None => None

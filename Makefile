@@ -1,3 +1,3 @@
 all:
-	corral run -- /usr/local/bin/ponyc .
+	corral run -- ponyc .
 	lldb ./http_server_lori1

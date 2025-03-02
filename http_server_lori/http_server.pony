@@ -19,7 +19,7 @@ actor HTTPServer is TCPListenerActor
     _server_auth = TCPServerAuth(listen_auth)
     _tcp_listener = TCPListener(listen_auth, host, port, this)
 
-  fun ref _on_accept(fd: U32): TCPServerActor =>
+  fun ref _on_accept(fd: U32): HTTPSessionActor tag =>
     cnt = cnt + 1
     if ((cnt %% 10000) == 0) then
       @printf("Count: %d\n".cstring(), cnt)
