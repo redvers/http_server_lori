@@ -1,3 +1,6 @@
 http_server_lori1
 lock.json
 *.swp
+_corral/
+_repos/
+generate_load/generate_load
