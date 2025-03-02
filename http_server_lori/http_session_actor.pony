@@ -1,4 +1,4 @@
-use "../../lori/lori"
+use "lori"
 use "buffered"
 use "collections"
 use @pony_scheduler_index[I32]()
@@ -19,14 +19,8 @@ trait HTTPSessionActor is TCPServerActor
     end
 
   fun ref parse_request_line() =>
-    // FIXME - NOTE - We may need to split up this section more
-    // since failure to complete this entire function will result
-    // in a desynched session.
-    //
-    // Yeah - I really should just be pulling a line()
-    //
     try
-      buffer().line()?
+      var line: String iso = buffer().line()?
     else
       P("AAAAAAAARRRRRRRHHHHHH\n".cstring())
     end

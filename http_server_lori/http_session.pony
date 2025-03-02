@@ -1,4 +1,4 @@
-use "../../lori/lori"
+use "lori"
 use "buffered"
 use "collections"
 

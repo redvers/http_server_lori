@@ -12,7 +12,7 @@ class MyTCPConnectionNotify is TCPConnectionNotify
 
   fun ref connected(conn: TCPConnection ref) =>
     conn.write("GET /" + _cnt.string() + " HTTP/1.1\r\nHost: 127.0.0.1:50000\r\n\r\n")
-    _out.print(">"+_cnt.string())
+//    _out.print(">"+_cnt.string())
 
   fun ref received(
     conn: TCPConnection ref,
@@ -20,8 +20,8 @@ class MyTCPConnectionNotify is TCPConnectionNotify
     times: USize)
     : Bool
   =>
-    _out.print("<"+_cnt.string())
-//    conn.close()
+//    _out.print("<"+_cnt.string())
+    conn.close()
     _main.ship_it(_main)
     false
 
