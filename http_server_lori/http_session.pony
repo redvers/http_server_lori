@@ -31,5 +31,5 @@ actor HTTPSession is HTTPSessionActor
    +-------------------+-----------------+
                                            */
 
-  fun _final() =>
-    @printf(".".cstring())
+//  fun _final() =>
+//    @printf(".".cstring())

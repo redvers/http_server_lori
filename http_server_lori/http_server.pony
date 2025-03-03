@@ -17,7 +17,7 @@ actor HTTPServer is TCPListenerActor
 
     ssa = ssa'
     _server_auth = TCPServerAuth(listen_auth)
-    _tcp_listener = TCPListener(listen_auth, host, port, this)
+    _tcp_listener = TCPListener(listen_auth, host, port, this, 1)
 
   fun ref _on_accept(fd: U32): HTTPSessionActor tag =>
     cnt = cnt + 1
