@@ -10,7 +10,7 @@ trait HTTPSessionActor is (TCPConnectionActor & ServerLifecycleEventReceiver)
   fun ref setstatus(status': HTTPSessionStatus): None
   fun ref request(): HTTPRequest
   fun ref buffer(): Reader
-##############################################################################
+
   fun ref process_buffer() =>
     """
     Handles incoming data.  Calls the appropriate function depending on where
@@ -22,9 +22,9 @@ trait HTTPSessionActor is (TCPConnectionActor & ServerLifecycleEventReceiver)
                    [ message-body ]
     """
     match status()
-    | _ExpectRequestLine => parse_request_line()  # Expects start-line (transitions on CRLF)
-    | _ExpectHeaders     => parse_headers()       # Expects *( field-line CRLF ) (transitions on additional CRLF)
-    | _ExpectBody        => return                # Should be Content-Length length
+    | _ExpectRequestLine => parse_request_line()  // Expects start-line (transitions on CRLF)
+    | _ExpectHeaders     => parse_headers()       // Expects *( field-line CRLF ) (transitions on additional CRLF)
+    | _ExpectBody        => return                // Should be Content-Length length
     end
 
   fun ref parse_request_line() =>
