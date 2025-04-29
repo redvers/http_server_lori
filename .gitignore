@@ -4,4 +4,4 @@ lock.json
 _corral/
 _repos/
 generate_load/generate_load
-_build
+build/
