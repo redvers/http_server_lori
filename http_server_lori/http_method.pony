@@ -8,6 +8,7 @@ type HTTPMethod is (
   HTTPDelete |
   HTTPPatch |
   HTTPTrace |
+  HTTPInvalid |
   None)
 
 primitive HTTPGet
@@ -28,3 +29,5 @@ primitive HTTPPatch
   fun string(): String val => "HTTPPatch"
 primitive HTTPTrace
   fun string(): String val => "HTTPTrace"
+primitive HTTPInvalid
+  fun string(): String val => "HTTPInvalid"

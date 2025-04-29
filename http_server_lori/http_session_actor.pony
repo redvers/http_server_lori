@@ -1,4 +1,5 @@
 use "lori"
+use "debug"
 use "buffered"
 use "collections"
 use @pony_scheduler_index[I32]()
@@ -28,18 +29,20 @@ trait HTTPSessionActor is (TCPConnectionActor & ServerLifecycleEventReceiver)
     end
 
   fun ref parse_request_line() =>
+    """
+    RFC9112:
+    In the interest of robustness, a server that is expecting to receive and parse a request-line SHOULD ignore at least one empty line (CRLF) received prior to the request-line. FIXME
+
+    A request-line begins with a method token, followed by a single space (SP), the request-target, and another single space (SP), and ends with the protocol version.
+
+  request-line   = method SP request-target SP HTTP-version
+    """
     try
-      var line: String iso = buffer().line()?
-    else
-      P("AAAAAAAARRRRRRRHHHHHH\n".cstring())
-    end
-    request().method = HTTPGet
-    request().path = "/fake"
-    request().version = HTTP11
-    /*
-      try
-        P("a".cstring())
-        match String.from_array(buffer().read_until(' ')?)
+      var line: String val = buffer().line()?
+      var s: Array[String val] = line.split_by(" ")
+
+      request().method =
+        match s(0)?
         | "GET" => HTTPGet
         | "HEAD" => HTTPHead
         | "POST" => HTTPPost
@@ -50,35 +53,25 @@ trait HTTPSessionActor is (TCPConnectionActor & ServerLifecycleEventReceiver)
         | "DELETE" => HTTPDelete
         | "PATCH" => HTTPPatch
         | "TRACE" => HTTPTrace
+        else
+          HTTPInvalid
         end
-        P("b".cstring())
-      else
-        return None
-      end
 
-    request().path =
-      try
-        P("c".cstring())
-        let q = String.from_array(buffer().read_until(' ')?)
-        P("d".cstring())
-        consume q
-      else
-        return None
-      end
-
-    request().version =
-      try
-        P("e".cstring())
-        match buffer().line()?
+      request().version =
+        match s(2)?
         | "HTTP/1.0" => HTTP10
         | "HTTP/1.1" => HTTP11
-        | let x: String val => None
+        else
+          None
         end
-        P("f".cstring())
-      else
-        return None
-      end
-*/
+
+      request().path = s(1)?
+
+      Debug.out(request().string())
+    else
+      return // Line is incomplete apparently.
+    end
+
     setstatus(_ExpectHeaders)
     process_buffer()
 
