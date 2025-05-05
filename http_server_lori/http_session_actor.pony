@@ -25,7 +25,8 @@ trait HTTPSessionActor is (TCPConnectionActor & ServerLifecycleEventReceiver)
     match status()
     | _ExpectRequestLine => parse_request_line()  // Expects start-line (transitions on CRLF)
     | _ExpectHeaders     => parse_headers()       // Expects *( field-line CRLF ) (transitions on additional CRLF)
-    | _ExpectBody        => return                // Should be Content-Length length
+    | _ExpectBody        => Debug.out(request().string())
+      return                // Should be Content-Length length
     end
 
   fun ref parse_request_line() =>
@@ -67,7 +68,6 @@ trait HTTPSessionActor is (TCPConnectionActor & ServerLifecycleEventReceiver)
 
       request().path = s(1)?
 
-      Debug.out(request().string())
     else
       return // Line is incomplete apparently.
     end
@@ -80,6 +80,8 @@ trait HTTPSessionActor is (TCPConnectionActor & ServerLifecycleEventReceiver)
       try
         let h: String val = buffer().line()?
         if (h == "") then
+          Debug.out("Expecting Body")
+          setstatus(_ExpectBody)
           break
         else
           let offs: ISize = h.find(": ")?
@@ -88,18 +90,20 @@ trait HTTPSessionActor is (TCPConnectionActor & ServerLifecycleEventReceiver)
           request().headers.insert(k,v)
         end
       else
-        None
+        Debug.out("Pending more")
+        break
       end
     end
+    Debug.out("Yay headers thus far!")
 
-    match request().method
-//    | HTTPGet => setstatus(_SendYourData)
-    | HTTPHead => setstatus(_SendYourData)
-    else
-      setstatus(_ExpectBody)
-      _connection().send(Http200())
-      _connection().close()
-    end
+//    match request().method
+//    | HTTPOptions => setstatus(_SendYourData)
+//    | HTTPHead => setstatus(_SendYourData)
+//    else
+//      setstatus(_ExpectBody)
+//      _connection().send(Http200())
+//      _connection().close()
+//    end
 
 
 

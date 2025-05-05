@@ -1,4 +1,4 @@
-config ?= release
+config ?= debug
 static ?= false
 linker ?=
 
